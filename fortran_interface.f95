@@ -1,42 +1,44 @@
 
 ! will call initial(), getxyz() and mechanic() from tinker,
-!  first taking care of adding c command line arguments
-subroutine do_initialization(arg1,arg2)
+!  after having first forwarded c command line arguments.
+subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initialization")
   
   use iso_c_binding
   use iounit
   use argue
+  use inform
   
   implicit none
 
-  character(len=240,kind=c_char) :: arg1,arg2
-  
-  character(len=240) :: test_str
-  logical            :: test
-  
-  ! first call the tinker routine initializing variables, parsing command line (but we will fill it manually with arguments below), etc.
-  call initial
+  character(len=1,kind=c_char) :: arg1(240),arg2(240)
+  integer :: i
 
-!   write (iout,*) narg
-!   write (iout,*) listarg
+! first call the tinker routine initializing variables, parsing command line (but we will fill it manually with arguments below), etc.
+  call initial
+  
+!   write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
+!   write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
   
   ! add pseudo command line arguments
-!   write (iout,*) 'arg1 = ',arg1
-!   write (iout,*) 'arg2 = ',arg2
-
   narg = 2
-  arg(0) = arg1
-  arg(1) = arg2
+  
+  do i=1,240
+    arg(0)(i:i) = arg1(i)
+    arg(1)(i:i) = arg2(i)
+  end do
+
+!   write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
+!   write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
+
   listarg(0) = .false.
   listarg(1) = .true.
+
+  ! force verbosity
+  silent  = .false.
+  verbose = .true.
+  debug   = .true.
   
-!   call nextarg(test_str,test)
-!   write (iout,*) 'test_str = ',test_str
-!   write (iout,*) 'test = ',test
-  
-!   write (iout,*) 'narg (after) = ',narg
-  
-  ! now we have added the fake command line arguments to variables of the the argue module so we can continue tinker initialization
+  ! now we have added the fake command line arguments to variables of the argue module so we can continue tinker initialization
   call getxyz
   call mechanic
 

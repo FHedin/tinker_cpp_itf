@@ -21,14 +21,14 @@ int main(int argc, char** argv)
     exit(-1);
   }
   
-  // this is for transmitting command line arguments to the fortran interface, transmitting them to tinker
+  // this is for transmitting command line arguments to the fortran interface, then forwarded to tinker
   char arg0[240],arg1[240];
   memset(arg0,' ',240);
   memset(arg1,' ',240);
   memcpy(arg0,argv[0],strlen(argv[0])*sizeof(char));
   memcpy(arg1,argv[1],strlen(argv[1])*sizeof(char));
   
-  do_initialization_(arg0,arg1);
+  do_tinker_initialization(arg0,arg1);
  
   return EXIT_SUCCESS;
 }
