@@ -4,7 +4,7 @@
 subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initialization")
   
   use iso_c_binding
-  use iounit
+!   use iounit
   use argue
   use inform
   
@@ -41,5 +41,63 @@ subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initializ
   ! now we have added the fake command line arguments to variables of the argue module so we can continue tinker initialization
   call getxyz
   call mechanic
+
+end subroutine
+
+!---------------------------------------------------------------------------------------------------------
+
+! ! setup the integrator : only stochastic verlet supported
+! subroutine do_tinker_setup_integration(nsteps,dt) bind(C, name="do_tinker_setup_integration")
+! 
+!   use iso_c_binding
+!   
+!   integer(kind=c_int32_t) :: nsteps
+!   real(kind=c_double)     :: dt
+!   
+!   ! TODO
+!   
+! end subroutine
+
+!---------------------------------------------------------------------------------------------------------
+
+! setup the simulation to take place in the NVT ensemble
+subroutine do_tinker_setup_NVT(temperature) bind(C, name="do_tinker_setup_NVT")
+
+  use iso_c_binding
+  
+  use bath, only: kelvin, isothermal
+  
+  real(kind=c_double) :: temperature
+  
+  kelvin = temperature
+  isothermal = .true.
+  
+  ! TODO
+  
+end subroutine
+
+!---------------------------------------------------------------------------------------------------------
+
+! setup the simulation to take place in the NPT ensemble
+subroutine do_tinker_setup_NPT(temperature,press) bind(C, name="do_tinker_setup_NPT")
+
+  use iso_c_binding
+  
+  use bath, only: kelvin, atmsph, isothermal, isobaric
+  
+  real(kind=c_double) :: temperature, press
+  
+  kelvin = temperature
+  atmsph = press
+  isothermal = .true.
+  isobaric = .true.
+  
+  ! TODO
+  
+end subroutine
+
+!---------------------------------------------------------------------------------------------------------
+
+subroutine do_tinker_one_step()
 
 end subroutine
