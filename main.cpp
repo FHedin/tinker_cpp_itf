@@ -32,15 +32,15 @@ int main(int argc, char** argv)
   // number of steps and timestep in fs
   int32_t nsteps = 1000;
   double dt = 1.0;
-  // do_tinker_setup_integration(&nsteps, &dt);
+  do_tinker_setup_integration(&nsteps, &dt);
   
-  // Setup NPT
-  double pressure = 1.0; // in atm
+  // Setup NPT or NVT
+//   double pressure = 1.0; // in atm
   double temperature = 300.0; // in Kelvin
-  do_tinker_setup_NPT(&temperature,&pressure);
-  
-  // Setup NVT
-  // double temperature = 300.0; // in Kelvin
+  double tau_temp = 1.0; // temperature coupling in ps^-1
+//   double tau_press = 1.0; // pressure coupling in ps^-1
+//   do_tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
+  do_tinker_setup_NVT(&temperature, &tau_temp);
 
   return EXIT_SUCCESS;
 }

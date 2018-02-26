@@ -1,13 +1,13 @@
 all:
-	g++ -fopenmp -O3 -march=native -c main.cpp
+	g++ -fopenmp -O3 -march=native -c main.cpp -o obj/main.o
 	
-	gfortran -fopenmp -O3 -march=native -fintrinsic-modules-path=$(HOME)/bin/tinker/mods -c fortran_interface.f95
+	gfortran -fopenmp -O3 -march=native -fintrinsic-modules-path=$(HOME)/bin/tinker/mods -c fortran_interface.f95 -o obj/fortran_interface.o
 	
 # 	g++ -fopenmp -O3 -march=native *.o $(HOME)/bin/tinker/libtinker.a -o tinker_cpp_itf -lgfortran -lfftw3 -lfftw3_threads
 	
-	g++ -fopenmp -O3 -march=native *.o -o tinker_cpp_itf -L$(HOME)/bin/tinker -Wl,-rpath,$(HOME)/bin/tinker \
+	g++ -fopenmp -O3 -march=native obj/*.o -o tinker_cpp_itf -L$(HOME)/bin/tinker -Wl,-rpath,$(HOME)/bin/tinker \
 	-ltinker -lgfortran -lfftw3 -lfftw3_threads
 
 
 clean:
-	rm -f *.o tinker_cpp_itf
+	rm -f obj/*.o tinker_cpp_itf

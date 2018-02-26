@@ -1,5 +1,5 @@
-*.o
+obj/
 tinker_cpp_itf
 tinker_cpp_itf.kdev4
-fortran_mods/
 .kdev4/
+*.mod
