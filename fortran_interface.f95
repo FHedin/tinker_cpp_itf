@@ -12,7 +12,8 @@ module tinker_cpp
   integer(kind=c_int32_t) :: nsteps
   real(kind=c_double)     :: dt
 
-  public  :: do_tinker_initialization, do_tinker_setup_integration, do_tinker_setup_NVT !, do_tinker_setup_NPT
+  public  :: do_tinker_initialization, do_tinker_setup_integration, do_tinker_setup_NVT, do_tinker_setup_NPT
+  public  :: do_tinker_stochastic_one_step, do_tinker_stochastic_n_steps
   private :: nsteps, dt
 
   contains
@@ -23,7 +24,7 @@ module tinker_cpp
   !  after having first forwarded c command line arguments.
   subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initialization")
     
-    use iounit
+!     use iounit
     use argue
     use inform
     
@@ -35,7 +36,9 @@ module tinker_cpp
 !     integer(kind=c_int32_t) :: a
 !     
 !     a=1
-    write(iout,*) huge(i),mod(5,huge(i))
+!     write(iout,*) huge(i),mod(5,huge(i))
+
+!   iwrite = 1
     
   ! first call the tinker routine initializing variables, parsing command line
   ! (but we will fill it manually with arguments below), etc.
@@ -93,8 +96,9 @@ module tinker_cpp
     
     ! this is used in mod(currentStep,iwrite) in order to know if there should be a traj I/O in case result is zero
     ! by setting it to something huge (here the largest 32 bits integer), we disable I/O
-    iwrite = huge(i)
-
+    ! iwrite = huge(i)
+    iwrite = 1
+    
   end subroutine
 
   !---------------------------------------------------------------------------------------------------------
@@ -111,6 +115,9 @@ module tinker_cpp
     
     tautemp = tau_temperature
     tautemp = max(tautemp,dt)
+    
+    call shakeup()
+    call mdinit()
     
   end subroutine
 
@@ -134,12 +141,15 @@ module tinker_cpp
     ! enforce bounds on thermostat and barostat coupling times
     tautemp = max(tautemp,dt)
     taupres = max(taupres,dt)
+    
+    call shakeup()
+    call mdinit()
 
   end subroutine
 
   !---------------------------------------------------------------------------------------------------------
 
-  subroutine do_tinker_stochastic_one_step(istep)
+  subroutine do_tinker_stochastic_one_step(istep) bind(C, name="do_tinker_stochastic_one_step")
 
     implicit none
     
@@ -151,7 +161,7 @@ module tinker_cpp
   
   !---------------------------------------------------------------------------------------------------------
   
-  subroutine do_tinker_stochastic_n_steps(istep,n)
+  subroutine do_tinker_stochastic_n_steps(istep,n) bind(C, name="do_tinker_stochastic_n_steps")
 
     implicit none
     

@@ -37,10 +37,15 @@ int main(int argc, char** argv)
   // Setup NPT or NVT
   double pressure = 1.0; // in atm
   double temperature = 300.0; // in Kelvin
-  double tau_temp = 1.0; // temperature coupling in ps^-1
-  double tau_press = 1.0; // pressure coupling in ps^-1
-  do_tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
-//   do_tinker_setup_NVT(&temperature, &tau_temp);
+  double tau_temp = 100.0; // temperature coupling in ps^-1
+//   double tau_press = 1.0; // pressure coupling in ps^-1
+  
+//   do_tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
+  do_tinker_setup_NVT(&temperature, &tau_temp);
+  
+  int32_t istep = 1;
+  int32_t nstep = 1000;
+  do_tinker_stochastic_n_steps(&istep,&nstep);
 
   return EXIT_SUCCESS;
 }
