@@ -5,6 +5,7 @@ module tinker_cpp
   
   use bath, only: kelvin, atmsph, isothermal, isobaric, tautemp, taupres
   use mdstuf, only: integrate
+  use inform, only: iwrite
   
   implicit none
   
@@ -22,7 +23,7 @@ module tinker_cpp
   !  after having first forwarded c command line arguments.
   subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initialization")
     
-  !   use iounit
+    use iounit
     use argue
     use inform
     
@@ -30,8 +31,14 @@ module tinker_cpp
 
     character(len=1,kind=c_char) :: arg1(240),arg2(240)
     integer :: i
-
-  ! first call the tinker routine initializing variables, parsing command line (but we will fill it manually with arguments below), etc.
+    
+!     integer(kind=c_int32_t) :: a
+!     
+!     a=1
+    write(iout,*) huge(i),mod(5,huge(i))
+    
+  ! first call the tinker routine initializing variables, parsing command line
+  ! (but we will fill it manually with arguments below), etc.
     call initial()
     
   !   write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
@@ -59,6 +66,11 @@ module tinker_cpp
     ! now we have added the fake command line arguments to variables of the argue module so we can continue tinker initialization
     call getxyz()
     call mechanic()
+    
+    kelvin = 0.0d0
+    atmsph = 0.0d0
+    isothermal = .false.
+    isobaric = .false.
 
   end subroutine
 
@@ -72,10 +84,16 @@ module tinker_cpp
     integer(kind=c_int32_t) :: numSteps
     real(kind=c_double)     :: delta_t
     
+    integer(kind=c_int32_t) :: i
+    
     nsteps = numSteps
     dt     = delta_t
 
     integrate = 'STOCHASTIC'
+    
+    ! this is used in mod(currentStep,iwrite) in order to know if there should be a traj I/O in case result is zero
+    ! by setting it to something huge (here the largest 32 bits integer), we disable I/O
+    iwrite = huge(i)
 
   end subroutine
 
@@ -94,35 +112,30 @@ module tinker_cpp
     tautemp = tau_temperature
     tautemp = max(tautemp,dt)
     
-    ! initialize unused NPT variables just in case
-    isobaric = .false.
-    atmsph = 1.0
-    taupres = max(taupres,dt)
-
   end subroutine
 
   !---------------------------------------------------------------------------------------------------------
 
-!   ! setup the simulation to take place in the NPT ensemble
-!   subroutine do_tinker_setup_NPT(temperature,press,tau_temperature,tau_pressure) bind(C, name="do_tinker_setup_NPT")
-!     
-!     implicit none
-! 
-!     real(kind=c_double) :: temperature, press, tau_temperature, tau_pressure
-!     
-!     kelvin = temperature
-!     atmsph = press
-!     isothermal = .true.
-!     isobaric = .true.
-!     
-!     tautemp = tau_temperature
-!     taupres = tau_pressure
-!     
-!     ! enforce bounds on thermostat and barostat coupling times
-!     tautemp = max(tautemp,dt)
-!     taupres = max(taupres,dt)
-! 
-!   end subroutine
+  ! setup the simulation to take place in the NPT ensemble
+  subroutine do_tinker_setup_NPT(temperature,press,tau_temperature,tau_pressure) bind(C, name="do_tinker_setup_NPT")
+    
+    implicit none
+
+    real(kind=c_double) :: temperature, press, tau_temperature, tau_pressure
+    
+    kelvin = temperature
+    atmsph = press
+    isothermal = .true.
+    isobaric = .true.
+    
+    tautemp = tau_temperature
+    taupres = tau_pressure
+    
+    ! enforce bounds on thermostat and barostat coupling times
+    tautemp = max(tautemp,dt)
+    taupres = max(taupres,dt)
+
+  end subroutine
 
   !---------------------------------------------------------------------------------------------------------
 

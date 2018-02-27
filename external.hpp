@@ -27,7 +27,7 @@ extern "C"
   /**
    * routine setting up simulation for NPT ensemble
    */
-//   void do_tinker_setup_NPT(double* temperature, double* press, double* tau_temp, double* tau_press);
+  void do_tinker_setup_NPT(double* temperature, double* press, double* tau_temp, double* tau_press);
   
   /**
    * Perform one integration step 
