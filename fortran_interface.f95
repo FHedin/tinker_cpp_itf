@@ -22,45 +22,58 @@ module tinker_cpp
   
   ! will call initial(), getxyz() and mechanic() from tinker,
   !  after having first forwarded c command line arguments.
-  subroutine do_tinker_initialization(arg1,arg2) bind(C, name="do_tinker_initialization")
+  subroutine do_tinker_initialization(n_args,args) bind(C, name="do_tinker_initialization")
     
-!     use iounit
+    use iounit
     use argue
     use inform
     
     implicit none
 
-    character(len=1,kind=c_char) :: arg1(240),arg2(240)
-    integer :: i
+    integer(kind=c_int32_t) :: n_args
+    character(len=1,kind=c_char) :: args(n_args*240)
+    
+    integer :: i,j
     
 !     integer(kind=c_int32_t) :: a
-!     
 !     a=1
 !     write(iout,*) huge(i),mod(5,huge(i))
-
-!   iwrite = 1
+! 
+!     iwrite = 1
     
-  ! first call the tinker routine initializing variables, parsing command line
-  ! (but we will fill it manually with arguments below), etc.
+!     write(iout,*) listarg
+    
+    ! first call the tinker routine initializing variables, parsing command line
+    ! (but we will fill it manually with arguments below), etc.
     call initial()
     
-  !   write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
-  !   write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
+!     write(iout,*) listarg
+    
+!     write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
+!     write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
     
     ! add pseudo command line arguments
-    narg = 2
+    narg = n_args
     
-    do i=1,240
-      arg(0)(i:i) = arg1(i)
-      arg(1)(i:i) = arg2(i)
+    do i=0,narg-1
+      do j=1,240
+        arg(i)(j:j) = args(i*240+j)
+      end do
     end do
 
-  !   write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
-  !   write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
+!     arg(0) = args(1:240)
+!     arg(1) = args(241:480)
+
+!     write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
+!     write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
 
     listarg(0) = .false.
-    listarg(1) = .true.
-
+    do i=1,narg
+      listarg(i) = .true.
+    end do
+    
+!     write(iout,*) listarg
+    
     ! force verbosity
     silent  = .false.
     verbose = .true.

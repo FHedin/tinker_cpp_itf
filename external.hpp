@@ -9,10 +9,15 @@
 extern "C"
 {
 
+
   /**
-   * routine initializing variables, managing pseudo-command line
-   */
-  void do_tinker_initialization(char arg1[240], char arg2[240]);
+  * @brief Provides the pseudo command line parameters to the tinker fortran code
+  * 
+  * @param n_args number of strings stored in arguments_concatenated : the total size of the arguments_concatenated string will be 240*n_args characters
+  * @param arguments_concatenated a long string containing arguments : they are concatenated, each argument was a string of exactly 240 characters
+  * 
+  */
+  void do_tinker_initialization(int32_t* n_args, char arguments_concatenated[]);
   
   /**
    * routine setting up integrator
