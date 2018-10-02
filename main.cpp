@@ -2,7 +2,10 @@
 #include <cstdio>
 #include <cstring>
 
-#include <iostream>
+// #include <iostream>
+
+#include <vector>
+#include <array>
 
 // this contains the pseudo interface to tinker's fortran code
 #include "external.hpp"
@@ -23,8 +26,16 @@ int main(/*int argc, char** argv*/)
 //   }
   
   const char* argv0 = "tinker_cpp_itf";
-  const char* argv1 = "enkephalin/enkephalin.xyz";
-  const char* argv2 = "enkephalin/mm3pro.prm";
+  const char* argv1 = "diamond/diamond.xyz";
+  const char* argv2 = "diamond/mm2.prm";
+  
+//   const char* argv0 = "tinker_cpp_itf";
+//   const char* argv1 = "enkephalin/enkephalin.xyz";
+//   const char* argv2 = "enkephalin/mm3pro.prm";
+  
+//   vector<array<char,240>> args;
+//   array<char,240> a;
+//   args.push_back(array<char,240>("tinker_cpp_itf"));
   
   int32_t n_args = 3;
   char* args = (char*) malloc(n_args*ARGSLEN*sizeof(char));
@@ -35,12 +46,12 @@ int main(/*int argc, char** argv*/)
   memcpy(args+ARGSLEN,argv1,strlen(argv1)*sizeof(char));
   memcpy(args+2*ARGSLEN,argv2,strlen(argv2)*sizeof(char));
   
-  do_tinker_initialization(&n_args,args);
+  tinker_initialization(&n_args,args);
 
-  // number of steps and timestep in fs
+  // number of steps and timestep in ps
   int32_t nsteps = 1000;
-  double dt = 1.0;
-//   do_tinker_setup_integration(&nsteps, &dt);
+  double dt = 0.001;
+  tinker_setup_integration(&nsteps, &dt);
   
   // Setup NPT or NVT
   double pressure = 1.0; // in atm
@@ -48,12 +59,14 @@ int main(/*int argc, char** argv*/)
   double tau_temp = 100.0; // temperature coupling in ps^-1
   double tau_press = 1.0; // pressure coupling in ps^-1
   
-//   do_tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
-//   do_tinker_setup_NVT(&temperature, &tau_temp);
+  tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
+//   tinker_setup_NVT(&temperature, &tau_temp);
   
   int32_t istep = 1;
   int32_t nstep = 1000;
-//   do_tinker_stochastic_n_steps(&istep,&nstep);
+  tinker_stochastic_n_steps(&istep,&nstep);
+  
+  tinker_finalize();
 
   return EXIT_SUCCESS;
 }

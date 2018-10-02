@@ -12,8 +12,8 @@ module tinker_cpp
   integer(kind=c_int32_t) :: nsteps
   real(kind=c_double)     :: dt
 
-  public  :: do_tinker_initialization, do_tinker_setup_integration, do_tinker_setup_NVT, do_tinker_setup_NPT
-  public  :: do_tinker_stochastic_one_step, do_tinker_stochastic_n_steps
+  public  :: tinker_initialization, tinker_setup_integration, tinker_setup_NVT, tinker_setup_NPT
+  public  :: tinker_stochastic_one_step, tinker_stochastic_n_steps
   private :: nsteps, dt
 
   contains
@@ -22,7 +22,7 @@ module tinker_cpp
   
   ! will call initial(), getxyz() and mechanic() from tinker,
   !  after having first forwarded c command line arguments.
-  subroutine do_tinker_initialization(n_args,args) bind(C, name="do_tinker_initialization")
+  subroutine tinker_initialization(n_args,args) bind(C, name="tinker_initialization")
     
     use iounit
     use argue
@@ -75,9 +75,13 @@ module tinker_cpp
 !     write(iout,*) listarg
     
     ! force verbosity
-    silent  = .false.
-    verbose = .true.
-    debug   = .true.
+!     silent  = .false.
+!     verbose = .true.
+!     debug   = .true.
+    
+    silent  = .true.
+    verbose = .false.
+    debug   = .false.
     
     ! now we have added the fake command line arguments to variables of the argue module so we can continue tinker initialization
     call getxyz()
@@ -93,14 +97,14 @@ module tinker_cpp
   !---------------------------------------------------------------------------------------------------------
 
   ! setup the integrator : only stochastic verlet supported
-  subroutine do_tinker_setup_integration(numSteps,delta_t) bind(C, name="do_tinker_setup_integration")
+  subroutine tinker_setup_integration(numSteps,delta_t) bind(C, name="tinker_setup_integration")
     
     implicit none
         
     integer(kind=c_int32_t) :: numSteps
     real(kind=c_double)     :: delta_t
     
-    integer(kind=c_int32_t) :: i
+!     integer(kind=c_int32_t) :: i
     
     nsteps = numSteps
     dt     = delta_t
@@ -117,7 +121,7 @@ module tinker_cpp
   !---------------------------------------------------------------------------------------------------------
 
   ! setup the simulation to take place in the NVT ensemble
-  subroutine do_tinker_setup_NVT(temperature,tau_temperature) bind(C, name="do_tinker_setup_NVT")
+  subroutine tinker_setup_NVT(temperature,tau_temperature) bind(C, name="tinker_setup_NVT")
     
     implicit none
     
@@ -137,7 +141,7 @@ module tinker_cpp
   !---------------------------------------------------------------------------------------------------------
 
   ! setup the simulation to take place in the NPT ensemble
-  subroutine do_tinker_setup_NPT(temperature,press,tau_temperature,tau_pressure) bind(C, name="do_tinker_setup_NPT")
+  subroutine tinker_setup_NPT(temperature,press,tau_temperature,tau_pressure) bind(C, name="tinker_setup_NPT")
     
     implicit none
 
@@ -162,7 +166,7 @@ module tinker_cpp
 
   !---------------------------------------------------------------------------------------------------------
 
-  subroutine do_tinker_stochastic_one_step(istep) bind(C, name="do_tinker_stochastic_one_step")
+  subroutine tinker_stochastic_one_step(istep) bind(C, name="tinker_stochastic_one_step")
 
     implicit none
     
@@ -174,7 +178,7 @@ module tinker_cpp
   
   !---------------------------------------------------------------------------------------------------------
   
-  subroutine do_tinker_stochastic_n_steps(istep,n) bind(C, name="do_tinker_stochastic_n_steps")
+  subroutine tinker_stochastic_n_steps(istep,n) bind(C, name="tinker_stochastic_n_steps")
 
     implicit none
     
@@ -191,5 +195,12 @@ module tinker_cpp
   
   !---------------------------------------------------------------------------------------------------------
   
+  subroutine tinker_finalize() bind(C, name="tinker_finalize")
+
+    implicit none
+    
+    call final()
+  
+  end subroutine
   
 end module
