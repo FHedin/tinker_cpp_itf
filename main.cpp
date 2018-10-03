@@ -7,6 +7,7 @@
 #include <vector>
 #include <array>
 #include <limits>
+#include <chrono>
 
 // this contains the pseudo interface to tinker's fortran code
 #include "external.hpp"
@@ -54,7 +55,7 @@ int main(/*int argc, char** argv*/)
   tinker_initialization(&n_args,args);
 
   // number of steps and timestep in ps
-  int32_t nsteps = 25000;
+  int32_t nsteps = 500000;
   double dt = 0.002;
   tinker_setup_integration(&nsteps, &dt);
   
@@ -66,55 +67,73 @@ int main(/*int argc, char** argv*/)
   
 //   tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
   tinker_setup_NVT(&temperature, &tau_temp);
-  
 
   // freq for writing trajectory to archive file
-  // int32_t write_freq = (int32_t) dump_time_ps/dt;
+//   int32_t write_freq = (int32_t) 1.0/dt;
   int32_t write_freq = numeric_limits<int32_t>::max();
   // freq for writing info to stdout
+//   int32_t print_freq = (int32_t) 1.0/dt;
   int32_t print_freq = numeric_limits<int32_t>::max();
   
   tinker_setup_IO(&write_freq,&print_freq);
   
-//   int32_t istep = 1;
-//   tinker_stochastic_n_steps(&istep,&nsteps);
-  
+  // allocate memory for storing coordinates and velocities of each atom
   vector<double> x(natoms);
   vector<double> y(natoms);
   vector<double> z(natoms);
   vector<double> vx(natoms);
   vector<double> vy(natoms);
   vector<double> vz(natoms);
-  
-//   const char def_at_type[4] = {'X','X','X','\0'};
-//   vector<char[4]> at_types(natoms);
-  
+
+  // allocate memory for retrieving atom type
   char* at_types = new char[natoms*4];
   
+  // a simple xyz trajectory file
   FILE* xyzf = fopen("traj.xyz","wt");
   
+  const int32_t traj_save_freq = 500;
+  
+  auto start = chrono::high_resolution_clock::now();
+
   for(int32_t istep=1; istep<=nsteps; istep++)
   {
+    // perform one integration
     tinker_stochastic_one_step(&istep);
-    
-    tinker_get_crdvels(x.data(),y.data(),z.data(),
-                       vx.data(), vy.data(), vz.data(),
-                       at_types);
-    
-    fprintf(xyzf,"%d\n",natoms);
-    fprintf(xyzf,"Ala2 at step %d\n",istep);
-    for(int32_t n=0; n<natoms; n++)
+   
+    // if necessary retrieve crdvels and print trajectory
+    if(istep%traj_save_freq == 0)
     {
-      fprintf(xyzf,"%s \t %.8f \t %.8f \t %.8f \n",&(at_types[n*4]),x[n],y[n],z[n]);
+      double time = (double)istep*dt;
+      
+      fprintf(stdout,"Retrieving coordinates and velocities at time %.3lf ps\n",time);
+      
+      tinker_get_crdvels(x.data(),y.data(),z.data(),
+                        vx.data(), vy.data(), vz.data(),
+                        at_types);
+      
+      fprintf(xyzf,"%d\n",natoms);
+      fprintf(xyzf,"Ala2 at time %.3lf\n",time);
+      for(int32_t n=0; n<natoms; n++)
+      {
+        fprintf(xyzf,"%s \t %.8f \t %.8f \t %.8f \n",&(at_types[n*4]),x[n],y[n],z[n]);
+      }
+      
     }
     
   }
   
-  fclose(xyzf);
+  //fclose(xyzf);
   
   tinker_finalize();
   
   delete[] at_types;
+
+  auto end = chrono::high_resolution_clock::now();
+
+  double elapsed_milli_seconds = (double) chrono::duration_cast<chrono::milliseconds>(end-start).count();
+
+  printf("Dynamics took %lf seconds\n",elapsed_milli_seconds/1000.);
+  printf("Performance is %lf ns/day\n",(((double)nsteps)*dt/1000.)/(elapsed_milli_seconds/1000./86400.));
 
   return EXIT_SUCCESS;
 }
