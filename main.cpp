@@ -26,12 +26,12 @@ int main(/*int argc, char** argv*/)
 //   }
   
   const char* argv0 = "tinker_cpp_itf";
-  const char* argv1 = "diamond/diamond.xyz";
-  const char* argv2 = "diamond/mm2.prm";
   
-//   const char* argv0 = "tinker_cpp_itf";
-//   const char* argv1 = "enkephalin/enkephalin.xyz";
-//   const char* argv2 = "enkephalin/mm3pro.prm";
+//   const char* argv1 = "diamond/diamond.xyz";
+//   const char* argv2 = "diamond/mm2.prm";
+  
+  const char* argv1 = "enkephalin/enkephalin.xyz";
+  const char* argv2 = "enkephalin/mm3pro.prm";
   
 //   vector<array<char,240>> args;
 //   array<char,240> a;
@@ -49,22 +49,22 @@ int main(/*int argc, char** argv*/)
   tinker_initialization(&n_args,args);
 
   // number of steps and timestep in ps
-  int32_t nsteps = 1000;
-  double dt = 0.001;
+  int32_t nsteps = 25000;
+  double dt = 0.002;
   tinker_setup_integration(&nsteps, &dt);
   
   // Setup NPT or NVT
-  double pressure = 1.0; // in atm
+//   double pressure = 1.0; // in atm
   double temperature = 300.0; // in Kelvin
-  double tau_temp = 100.0; // temperature coupling in ps^-1
-  double tau_press = 1.0; // pressure coupling in ps^-1
+  double tau_temp = 0.1; // temperature coupling in ps
+//   double tau_press = 1.0; // pressure coupling in ps
   
-  tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
-//   tinker_setup_NVT(&temperature, &tau_temp);
+//   tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
+  tinker_setup_NVT(&temperature, &tau_temp);
   
   int32_t istep = 1;
-  int32_t nstep = 1000;
-  tinker_stochastic_n_steps(&istep,&nstep);
+//   int32_t nstep = 1000;
+  tinker_stochastic_n_steps(&istep,&nsteps);
   
   tinker_finalize();
 

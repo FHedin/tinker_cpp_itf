@@ -79,9 +79,9 @@ module tinker_cpp
 !     verbose = .true.
 !     debug   = .true.
     
-    silent  = .true.
-    verbose = .false.
-    debug   = .false.
+!     silent  = .true.
+!     verbose = .false.
+!     debug   = .false.
     
     ! now we have added the fake command line arguments to variables of the argue module so we can continue tinker initialization
     call getxyz()
@@ -114,7 +114,7 @@ module tinker_cpp
     ! this is used in mod(currentStep,iwrite) in order to know if there should be a traj I/O in case result is zero
     ! by setting it to something huge (here the largest 32 bits integer), we disable I/O
     ! iwrite = huge(i)
-    iwrite = 1
+    iwrite = 500
     
   end subroutine
 
@@ -187,8 +187,8 @@ module tinker_cpp
     integer(kind=c_int32_t) :: i
     
     do i=1,n
-      istep = istep + 1 
       call sdstep(istep,dt)
+      istep = istep + 1
     end do
   
   end subroutine
