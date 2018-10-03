@@ -12,7 +12,6 @@
 extern "C"
 {
 
-
   /**
   * @brief Provides the pseudo command line parameters to the tinker fortran code
   * 
@@ -38,6 +37,14 @@ extern "C"
   void tinker_setup_NPT(double* temperature, double* press, double* tau_temp, double* tau_press);
   
   /**
+   * routine for seeting frequency of writing to stdout or to traj files
+   * 
+   * NOTE This should be called after tinker_setup_NVT or tinker_setup_NPT
+   * NOTE Set to 0 for disabling stdout printings and dumps to files
+   */
+  void tinker_setup_IO(int32_t* write_freq, int32_t* print_freq);
+  
+  /**
    * Perform one integration step 
    */
   void tinker_stochastic_one_step(int32_t* istep);
@@ -46,6 +53,13 @@ extern "C"
    * Perform n integration steps 
    */
   void tinker_stochastic_n_steps(int32_t* istep, int32_t* n);
+  
+  /**
+   * retrieve coordinates and velocities from tinker
+   */
+  void tinker_get_crdvels(double* x_crd, double* y_crd, double* z_crd,
+                          double* x_vels, double* y_vels, double* z_vels,
+                          char at_type[4]);
   
   /**
    * Finalize the Tinker code

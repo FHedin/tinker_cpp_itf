@@ -3,9 +3,9 @@ module tinker_cpp
 
   use iso_c_binding
   
-  use bath, only: kelvin, atmsph, isothermal, isobaric, tautemp, taupres
-  use mdstuf, only: integrate
-  use inform, only: iwrite
+!   use bath, only: kelvin, atmsph, isothermal, isobaric, tautemp, taupres
+!   use mdstuf, only: integrate
+!   use inform, only: iwrite, iprint
   
   implicit none
   
@@ -24,9 +24,11 @@ module tinker_cpp
   !  after having first forwarded c command line arguments.
   subroutine tinker_initialization(n_args,args) bind(C, name="tinker_initialization")
     
-    use iounit
-    use argue
-    use inform
+!     use iounit
+    use argue, only: narg, listarg, arg
+!     use inform
+    
+    use bath, only: kelvin, atmsph, isothermal, isobaric
     
     implicit none
 
@@ -109,12 +111,11 @@ module tinker_cpp
     nsteps = numSteps
     dt     = delta_t
 
-    integrate = 'STOCHASTIC'
+!     integrate = 'STOCHASTIC'
     
     ! this is used in mod(currentStep,iwrite) in order to know if there should be a traj I/O in case result is zero
     ! by setting it to something huge (here the largest 32 bits integer), we disable I/O
     ! iwrite = huge(i)
-    iwrite = 500
     
   end subroutine
 
@@ -122,6 +123,8 @@ module tinker_cpp
 
   ! setup the simulation to take place in the NVT ensemble
   subroutine tinker_setup_NVT(temperature,tau_temperature) bind(C, name="tinker_setup_NVT")
+    
+    use bath, only: kelvin, isothermal, tautemp
     
     implicit none
     
@@ -143,6 +146,8 @@ module tinker_cpp
   ! setup the simulation to take place in the NPT ensemble
   subroutine tinker_setup_NPT(temperature,press,tau_temperature,tau_pressure) bind(C, name="tinker_setup_NPT")
     
+    use bath, only: kelvin, atmsph, isothermal, isobaric, tautemp, taupres
+    
     implicit none
 
     real(kind=c_double) :: temperature, press, tau_temperature, tau_pressure
@@ -162,6 +167,19 @@ module tinker_cpp
     call shakeup()
     call mdinit()
 
+  end subroutine
+  
+  subroutine tinker_setup_IO(write_freq,print_freq) bind(C, name="tinker_setup_IO")
+  
+    use inform, only: iwrite, iprint
+    
+    implicit none
+    
+    integer(kind=c_int32_t) :: write_freq, print_freq
+    
+    iwrite = write_freq
+    iprint = print_freq
+    
   end subroutine
 
   !---------------------------------------------------------------------------------------------------------
@@ -191,6 +209,37 @@ module tinker_cpp
       istep = istep + 1
     end do
   
+  end subroutine
+  !---------------------------------------------------------------------------------------------------------
+  
+  subroutine tinker_get_crdvels(x_crd,y_crd,z_crd,x_vels,y_vels,z_vels,at_type) bind(C, name="tinker_get_crdvels")
+  
+    use atoms !,  only: x, y, z, n
+    use atomid, only: name
+    use moldyn, only: v
+  
+    implicit none
+    
+    real(kind=c_double) :: x_crd(n), y_crd(n), z_crd(n)
+    real(kind=c_double) :: x_vels(n), y_vels(n), z_vels(n)
+    character(len=1,kind=c_char) :: at_type(4*n)
+    
+    integer(kind=c_int32_t) :: i,j
+    
+    x_crd(1:n) = x(1:n)
+    y_crd(1:n) = y(1:n)
+    z_crd(1:n) = z(1:n)
+    
+    x_vels(1:n) = v(1,1:n)
+    y_vels(1:n) = v(2,1:n)
+    z_vels(1:n) = v(3,1:n)
+    
+    do i=1,n
+      j = (i-1)*4
+      at_type(j+1:j+3) = name(i)(1:3)
+      at_type(j+4)   = C_NULL_CHAR
+    end do
+    
   end subroutine
   
   !---------------------------------------------------------------------------------------------------------

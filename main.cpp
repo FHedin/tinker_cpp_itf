@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <array>
+#include <limits>
 
 // this contains the pseudo interface to tinker's fortran code
 #include "external.hpp"
@@ -30,8 +31,12 @@ int main(/*int argc, char** argv*/)
 //   const char* argv1 = "diamond/diamond.xyz";
 //   const char* argv2 = "diamond/mm2.prm";
   
-  const char* argv1 = "enkephalin/enkephalin.xyz";
-  const char* argv2 = "enkephalin/mm3pro.prm";
+//   const char* argv1 = "enkephalin/enkephalin.xyz";
+//   const char* argv2 = "enkephalin/mm3pro.prm";
+  
+  const char* argv1 = "ala2/ala2.xyz";
+  const char* argv2 = "ala2/charmm22.prm";
+  const int32_t natoms = 22;
   
 //   vector<array<char,240>> args;
 //   array<char,240> a;
@@ -62,11 +67,54 @@ int main(/*int argc, char** argv*/)
 //   tinker_setup_NPT(&temperature,&pressure,&tau_temp,&tau_press);
   tinker_setup_NVT(&temperature, &tau_temp);
   
-  int32_t istep = 1;
-//   int32_t nstep = 1000;
-  tinker_stochastic_n_steps(&istep,&nsteps);
+
+  // freq for writing trajectory to archive file
+  // int32_t write_freq = (int32_t) dump_time_ps/dt;
+  int32_t write_freq = numeric_limits<int32_t>::max();
+  // freq for writing info to stdout
+  int32_t print_freq = numeric_limits<int32_t>::max();
+  
+  tinker_setup_IO(&write_freq,&print_freq);
+  
+//   int32_t istep = 1;
+//   tinker_stochastic_n_steps(&istep,&nsteps);
+  
+  vector<double> x(natoms);
+  vector<double> y(natoms);
+  vector<double> z(natoms);
+  vector<double> vx(natoms);
+  vector<double> vy(natoms);
+  vector<double> vz(natoms);
+  
+//   const char def_at_type[4] = {'X','X','X','\0'};
+//   vector<char[4]> at_types(natoms);
+  
+  char* at_types = new char[natoms*4];
+  
+  FILE* xyzf = fopen("traj.xyz","wt");
+  
+  for(int32_t istep=1; istep<=nsteps; istep++)
+  {
+    tinker_stochastic_one_step(&istep);
+    
+    tinker_get_crdvels(x.data(),y.data(),z.data(),
+                       vx.data(), vy.data(), vz.data(),
+                       at_types);
+    
+    fprintf(xyzf,"%d\n",natoms);
+    fprintf(xyzf,"Ala2 at step %d\n",istep);
+    for(int32_t n=0; n<natoms; n++)
+    {
+      fprintf(xyzf,"%s \t %.8f \t %.8f \t %.8f \n",&(at_types[n*4]),x[n],y[n],z[n]);
+    }
+    
+  }
+  
+  fclose(xyzf);
   
   tinker_finalize();
+  
+  delete[] at_types;
 
   return EXIT_SUCCESS;
 }
