@@ -1,20 +1,16 @@
 
+! This is the Fortran code acting as an intermediate layer between Tinker and the C++ code
 module tinker_cpp
 
   use iso_c_binding
   
-!   use bath, only: kelvin, atmsph, isothermal, isobaric, tautemp, taupres
-!   use mdstuf, only: integrate
-!   use inform, only: iwrite, iprint
-  
   implicit none
   
-  integer(kind=c_int32_t) :: nsteps
-  real(kind=c_double)     :: dt
-
-  public  :: tinker_initialization, tinker_setup_integration, tinker_setup_NVT, tinker_setup_NPT
-  public  :: tinker_stochastic_one_step, tinker_stochastic_n_steps
-  private :: nsteps, dt
+  integer(kind=c_int32_t)         :: nsteps
+  real(kind=c_double)             :: dt
+  
+  ! this variable is declared bound to C so that it can be accessed directly from C++ code
+  integer(kind=c_int32_t),bind(C) :: natoms
 
   contains
 
@@ -24,10 +20,8 @@ module tinker_cpp
   !  after having first forwarded c command line arguments.
   subroutine tinker_initialization(n_args,args) bind(C, name="tinker_initialization")
     
-!     use iounit
     use argue, only: narg, listarg, arg
-!     use inform
-    
+    use atoms, only: n
     use bath, only: kelvin, atmsph, isothermal, isobaric
     
     implicit none
@@ -37,22 +31,9 @@ module tinker_cpp
     
     integer :: i,j
     
-!     integer(kind=c_int32_t) :: a
-!     a=1
-!     write(iout,*) huge(i),mod(5,huge(i))
-! 
-!     iwrite = 1
-    
-!     write(iout,*) listarg
-    
     ! first call the tinker routine initializing variables, parsing command line
     ! (but we will fill it manually with arguments below), etc.
     call initial()
-    
-!     write(iout,*) listarg
-    
-!     write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
-!     write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
     
     ! add pseudo command line arguments
     narg = n_args
@@ -63,24 +44,17 @@ module tinker_cpp
       end do
     end do
 
-!     arg(0) = args(1:240)
-!     arg(1) = args(241:480)
-
-!     write(iout,*) 'arg(0) = |',arg(0)(1:240),'|'
-!     write(iout,*) 'arg(1) = |',arg(1)(1:240),'|'
-
     listarg(0) = .false.
     do i=1,narg
       listarg(i) = .true.
     end do
     
-!     write(iout,*) listarg
-    
     ! force verbosity
 !     silent  = .false.
 !     verbose = .true.
 !     debug   = .true.
-    
+
+    ! disabled output ?
 !     silent  = .true.
 !     verbose = .false.
 !     debug   = .false.
@@ -93,6 +67,8 @@ module tinker_cpp
     atmsph = 0.0d0
     isothermal = .false.
     isobaric = .false.
+    
+    natoms = n
 
   end subroutine
 
@@ -112,10 +88,6 @@ module tinker_cpp
     dt     = delta_t
 
 !     integrate = 'STOCHASTIC'
-    
-    ! this is used in mod(currentStep,iwrite) in order to know if there should be a traj I/O in case result is zero
-    ! by setting it to something huge (here the largest 32 bits integer), we disable I/O
-    ! iwrite = huge(i)
     
   end subroutine
 
@@ -169,6 +141,7 @@ module tinker_cpp
 
   end subroutine
   
+  ! setup Tinker's I/O frequency
   subroutine tinker_setup_IO(write_freq,print_freq) bind(C, name="tinker_setup_IO")
   
     use inform, only: iwrite, iprint
@@ -184,6 +157,7 @@ module tinker_cpp
 
   !---------------------------------------------------------------------------------------------------------
 
+  ! Performs one integration step (STOCHASTIC type integrator only)
   subroutine tinker_stochastic_one_step(istep) bind(C, name="tinker_stochastic_one_step")
 
     implicit none
@@ -196,15 +170,16 @@ module tinker_cpp
   
   !---------------------------------------------------------------------------------------------------------
   
-  subroutine tinker_stochastic_n_steps(istep,n) bind(C, name="tinker_stochastic_n_steps")
+  ! Performs nsteps integration steps (STOCHASTIC type integrator only)
+  subroutine tinker_stochastic_n_steps(istep,nsteps) bind(C, name="tinker_stochastic_n_steps")
 
     implicit none
     
-    integer(kind=c_int32_t) :: istep, n
+    integer(kind=c_int32_t) :: istep, nsteps
     
     integer(kind=c_int32_t) :: i
     
-    do i=1,n
+    do i=1,nsteps
       call sdstep(istep,dt)
       istep = istep + 1
     end do
@@ -212,9 +187,10 @@ module tinker_cpp
   end subroutine
   !---------------------------------------------------------------------------------------------------------
   
+  ! Copy to C++ vectors the current coordinates and velocities
   subroutine tinker_get_crdvels(x_crd,y_crd,z_crd,x_vels,y_vels,z_vels,at_type) bind(C, name="tinker_get_crdvels")
   
-    use atoms !,  only: x, y, z, n
+    use atoms,  only: x,y,z,n
     use atomid, only: name
     use moldyn, only: v
   
@@ -244,6 +220,7 @@ module tinker_cpp
   
   !---------------------------------------------------------------------------------------------------------
   
+  ! Finalize Tinker code properly 
   subroutine tinker_finalize() bind(C, name="tinker_finalize")
 
     implicit none
