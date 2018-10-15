@@ -13,15 +13,19 @@
 
 #define TINKER_ARGSLEN 240
 
+/**
+ * @brief  This makes variables declared in the Fortran module tinker_cpp acessible from C++
+ */
+extern const int32_t natoms;
+extern double* x;
+extern double* y;
+extern double* z;
+extern double* vx;
+extern double* vy;
+extern double* vz;
+
 extern "C"
 {
-
-  /**
-   * @brief  A variable from the Tinker Fortran interface acessible from C++,
-   *         simply contains the number of atoms in the system.
-   */
-  extern int32_t natoms;
-  
   /**
   * @brief Provides the pseudo command line parameters to the tinker fortran code
   * 
@@ -91,21 +95,17 @@ extern "C"
   /**
   * @brief Retrieve coordinates and velocities from Tinker
   * 
-  * In the following let us assume the vectors are os size N, N being the number of atoms in the system
-  * 
-  * @param x_crd  Vector of x coordinate, of size N
-  * @param y_crd  Vector of y coordinate, of size N
-  * @param z_crd  Vector of z coordinate, of size N
-  * @param x_vels Vector of x component of the velocity, of size N
-  * @param y_vels Vector of y component of the velocity, of size N
-  * @param z_vels Vector of z component of the velocity, of size N
-  * @param at_type A char array for storing contiguously the atom names, size is N*4
+  * They will be stored in pointers x y z vx vy vz : they are of size natoms and have been allocated/freed by the fortran module.
   */
-  void tinker_get_crdvels(double* x_crd, double* y_crd, double* z_crd,
-                          double* x_vels, double* y_vels, double* z_vels,
-                          char at_type[4]);
+  void tinker_get_crdvels();
   
-
+  /**
+   * @brief Provide to Tinker x y z coordinates and vx vy vz velocities
+   * 
+   * They areretrieved from pointers x y z vx vy vz : they are of size natoms and have been allocated/freed by the fortran module.
+   */  
+  void tinker_set_crdvels();
+  
   /**
   * @brief  Finalize the Tinker code
   * 

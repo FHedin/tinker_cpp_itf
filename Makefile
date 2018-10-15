@@ -1,6 +1,6 @@
-CXX  = g++
-FC   = gfortran
-OPTS = -fopenmp -O3 -march=native
+CXX  = g++ -std=c++14
+FC   = gfortran -std=f2008
+OPTS = -fopenmp -O3 -march=native -Wall -Wextra
 
 TINKER_HOME = $(HOME)/bin/tinker
 TINKER_LIB  = $(TINKER_HOME)/libtinker.a
@@ -14,7 +14,7 @@ all:
 	
 	$(CXX) $(OPTS) -c main.cpp -o obj/main.o
 	
-	$(FC)  $(OPTS) -fintrinsic-modules-path=$(TINKER_MODS_DIR) -c tinker_interface.f95 -o obj/tinker_interface.o
+	$(FC)  $(OPTS) -fintrinsic-modules-path=$(TINKER_MODS_DIR) -c tinker_interface.f08 -o obj/tinker_interface.o
 	
 	$(CXX) $(OPTS) obj/*.o $(TINKER_LIB) -o $(EXEC) $(LIBS)
 

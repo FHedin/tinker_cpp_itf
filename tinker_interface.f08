@@ -3,15 +3,26 @@
 module tinker_cpp
 
   use iso_c_binding
-  
-  implicit none
-  
-  integer(kind=c_int32_t)         :: nsteps
-  real(kind=c_double)             :: dt
-  
-  ! this variable is declared bound to C so that it can be accessed directly from C++ code
-  integer(kind=c_int32_t),bind(C) :: natoms
 
+  implicit none
+
+  integer(kind=c_int32_t) :: nsteps
+  real(kind=c_double)     :: dt
+
+  ! a pointer used so that n from module atoms (i.e. the number of atoms in the system as stored by tinker)
+  !  can be accessed directly from C++ code
+  integer(kind=c_int32_t), bind(C, name='natoms') :: natoms
+  
+  real(kind=c_double), allocatable, target :: x_crd(:),  y_crd(:),  z_crd(:)
+  type(c_ptr), bind(C, name='x')  :: x_p
+  type(c_ptr), bind(C, name='y')  :: y_p
+  type(c_ptr), bind(C, name='z')  :: z_p
+
+  real(kind=c_double), allocatable, target :: x_vels(:), y_vels(:), z_vels(:)
+  type(c_ptr), bind(C, name='vx') :: vx_p
+  type(c_ptr), bind(C, name='vy') :: vy_p
+  type(c_ptr), bind(C, name='vz') :: vz_p
+  
   contains
 
   !---------------------------------------------------------------------------------------------------------
@@ -69,6 +80,22 @@ module tinker_cpp
     isobaric = .false.
     
     natoms = n
+    
+    allocate(x_crd(n))
+    allocate(y_crd(n))
+    allocate(z_crd(n))
+    
+    allocate(x_vels(n))
+    allocate(y_vels(n))
+    allocate(z_vels(n))
+    
+    x_p  = c_loc(x_crd)
+    y_p  = c_loc(y_crd)
+    z_p  = c_loc(z_crd)
+    
+    vx_p = c_loc(x_vels)
+    vy_p = c_loc(y_vels)
+    vz_p = c_loc(z_vels)
 
   end subroutine
 
@@ -187,20 +214,15 @@ module tinker_cpp
   end subroutine
   !---------------------------------------------------------------------------------------------------------
   
-  ! Copy to C++ vectors the current coordinates and velocities
-  subroutine tinker_get_crdvels(x_crd,y_crd,z_crd,x_vels,y_vels,z_vels,at_type) bind(C, name="tinker_get_crdvels")
+  ! Copy from Tinker to C++ the current coordinates and velocities
+  ! TODO avoid copy by accesing via an external pointer from C++ ?
+  ! TODO also copy dimension of periodic box
+  subroutine tinker_get_crdvels() bind(C, name="tinker_get_crdvels")
   
     use atoms,  only: x,y,z,n
-    use atomid, only: name
     use moldyn, only: v
   
     implicit none
-    
-    real(kind=c_double) :: x_crd(n), y_crd(n), z_crd(n)
-    real(kind=c_double) :: x_vels(n), y_vels(n), z_vels(n)
-    character(len=1,kind=c_char) :: at_type(4*n)
-    
-    integer(kind=c_int32_t) :: i,j
     
     x_crd(1:n) = x(1:n)
     y_crd(1:n) = y(1:n)
@@ -210,12 +232,28 @@ module tinker_cpp
     y_vels(1:n) = v(2,1:n)
     z_vels(1:n) = v(3,1:n)
     
-    do i=1,n
-      j = (i-1)*4
-      at_type(j+1:j+3) = name(i)(1:3)
-      at_type(j+4)   = C_NULL_CHAR
-    end do
+  end subroutine
+  
+  !---------------------------------------------------------------------------------------------------------
+  
+  ! Copy from C++ to Tinker the current coordinates and velocities
+  ! TODO avoid copy by accesing via an external pointer from C++ ?
+  ! TODO also copy dimension of periodic box
+  subroutine tinker_set_crdvels() bind(C, name="tinker_set_crdvels")
+  
+    use atoms,  only: x,y,z,n
+    use moldyn, only: v
+  
+    implicit none
     
+    x(1:n) = x_crd(1:n)
+    y(1:n) = y_crd(1:n)
+    z(1:n) = z_crd(1:n)
+    
+    v(1,1:n) = x_vels(1:n)
+    v(2,1:n) = y_vels(1:n)
+    v(3,1:n) = z_vels(1:n)
+  
   end subroutine
   
   !---------------------------------------------------------------------------------------------------------
@@ -226,6 +264,30 @@ module tinker_cpp
     implicit none
     
     call final()
+    
+    if(allocated(x_crd)) then
+      deallocate(x_crd)
+    end if
+    
+    if(allocated(y_crd)) then
+      deallocate(y_crd)
+    end if
+    
+    if(allocated(z_crd)) then
+      deallocate(z_crd)
+    end if
+    
+    if(allocated(x_vels)) then
+      deallocate(x_vels)
+    end if
+    
+    if(allocated(y_vels)) then
+      deallocate(y_vels)
+    end if
+    
+    if(allocated(z_vels)) then
+      deallocate(z_vels)
+    end if
   
   end subroutine
   
