@@ -1,5 +1,5 @@
 
-! This is the Fortran code acting as an intermediate layer between Tinker and the C++ code
+! This is the Fortran module acting as an intermediate layer between Tinker and the C++ code
 module tinker_cpp
 
   use iso_c_binding
@@ -9,15 +9,18 @@ module tinker_cpp
   integer(kind=c_int32_t) :: nsteps
   real(kind=c_double)     :: dt
 
-  ! a pointer used so that n from module atoms (i.e. the number of atoms in the system as stored by tinker)
-  !  can be accessed directly from C++ code
+  ! a variable used such that 'n' from Tinker module 'atoms' (i.e. the number of atoms in the system )
+  !  can be accessed from C++ code (accessed via 'extern int32_t natoms' declared in tinker_interface.hpp)
   integer(kind=c_int32_t), bind(C, name='natoms') :: natoms
   
+  ! vectors for storing coordinates
   real(kind=c_double), allocatable, target :: x_crd(:),  y_crd(:),  z_crd(:)
+  ! pointers for accessing the vectors from c++
   type(c_ptr), bind(C, name='x')  :: x_p
   type(c_ptr), bind(C, name='y')  :: y_p
   type(c_ptr), bind(C, name='z')  :: z_p
 
+  ! vectors for storing velocities and pointers for access from c++
   real(kind=c_double), allocatable, target :: x_vels(:), y_vels(:), z_vels(:)
   type(c_ptr), bind(C, name='vx') :: vx_p
   type(c_ptr), bind(C, name='vy') :: vy_p
@@ -34,6 +37,8 @@ module tinker_cpp
     use argue, only: narg, listarg, arg
     use atoms, only: n
     use bath, only: kelvin, atmsph, isothermal, isobaric
+    use bound
+    use boxes
     
     implicit none
 
@@ -81,6 +86,7 @@ module tinker_cpp
     
     natoms = n
     
+    ! allocate memory for storing coordinates and velocities, and make them accessible via c++ using pseudo-pointers
     allocate(x_crd(n))
     allocate(y_crd(n))
     allocate(z_crd(n))
@@ -96,6 +102,12 @@ module tinker_cpp
     vx_p = c_loc(x_vels)
     vy_p = c_loc(y_vels)
     vz_p = c_loc(z_vels)
+    
+    ! pbc checked here
+    write(6,*) "PBCs in use ? : ", use_bounds
+    write(6,*) "PBCs A B C vectors : ", xbox, ybox, zbox
+    write(6,*) "PBCs ALPHA BETA GAMMA angles : ", alpha, beta, gamma
+    write(6,*) "Box volume is : ", volbox
 
   end subroutine
 
@@ -108,8 +120,6 @@ module tinker_cpp
         
     integer(kind=c_int32_t) :: numSteps
     real(kind=c_double)     :: delta_t
-    
-!     integer(kind=c_int32_t) :: i
     
     nsteps = numSteps
     dt     = delta_t

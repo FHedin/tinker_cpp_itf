@@ -40,7 +40,8 @@ int main(int argc, char** argv)
   const char* argv2 = "ala2/charmm22.prm";
   
   int32_t n_args = 3;
-  char* args = (char*) malloc(n_args*TINKER_ARGSLEN*sizeof(char));
+//   char* args = (char*) malloc(n_args*TINKER_ARGSLEN*sizeof(char));
+  char* args = new char[n_args*TINKER_ARGSLEN];
   
   memset(args,' ',n_args*TINKER_ARGSLEN);
   
@@ -50,10 +51,12 @@ int main(int argc, char** argv)
   
   tinker_initialization(&n_args,args);
   
+  delete[] args;
+  
   fprintf(stdout,"NATOMS = %d\n",natoms);
 
   // number of steps and timestep in ps
-  int32_t nsteps = 3;
+  int32_t nsteps = 500'000;
   double dt = 0.002;
   tinker_setup_integration(&nsteps, &dt);
   
@@ -78,14 +81,13 @@ int main(int argc, char** argv)
   // int32_t print_freq = (int32_t) 1.0/dt;
   int32_t write_freq = numeric_limits<int32_t>::max();
   int32_t print_freq = numeric_limits<int32_t>::max();
+  const int32_t traj_save_freq = 500;
   
   tinker_setup_IO(&write_freq,&print_freq);
   
   // a simple xyz trajectory file
   FILE* xyzf  = fopen("traj.xyz","wt");
   FILE* vxyzf = fopen("vels.xyz","wt");
-  
-  const int32_t traj_save_freq = 1;
   
   auto start = chrono::high_resolution_clock::now();
 
