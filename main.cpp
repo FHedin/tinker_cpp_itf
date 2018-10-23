@@ -6,6 +6,7 @@
 #include <array>
 #include <limits>
 #include <chrono>
+#include <iostream>
 
 // this contains the pseudo interface to tinker's fortran code
 #include "tinker_interface.hpp"
@@ -57,6 +58,7 @@ int main(int argc, char** argv)
 
   // number of steps and timestep in ps
   int32_t nsteps = 500'000;
+//   int32_t nsteps = 10;
   double dt = 0.002;
   tinker_setup_integration(&nsteps, &dt);
   
@@ -81,13 +83,14 @@ int main(int argc, char** argv)
   // int32_t print_freq = (int32_t) 1.0/dt;
   int32_t write_freq = numeric_limits<int32_t>::max();
   int32_t print_freq = numeric_limits<int32_t>::max();
-  const int32_t traj_save_freq = 500;
+  
+//   const int32_t traj_save_freq = 500;
   
   tinker_setup_IO(&write_freq,&print_freq);
   
   // a simple xyz trajectory file
-  FILE* xyzf  = fopen("traj.xyz","wt");
-  FILE* vxyzf = fopen("vels.xyz","wt");
+//   FILE* xyzf  = fopen("traj.xyz","wt");
+//   FILE* vxyzf = fopen("vels.xyz","wt");
   
   auto start = chrono::high_resolution_clock::now();
 
@@ -96,35 +99,35 @@ int main(int argc, char** argv)
     // perform one integration
     tinker_stochastic_one_step(&istep);
    
-    // if necessary retrieve crdvels and print trajectory
-    if(istep%traj_save_freq == 0)
-    {
-      double time = (double)istep*dt;
-      
-      fprintf(stdout,"Retrieving coordinates and velocities at time %.3lf ps\n",time);
-      
-      tinker_get_crdvels();
-      
-      fprintf(xyzf,"%d\n",natoms);
-      fprintf(xyzf,"Ala2 coordinates at time %.3lf\n",time);
-      for(int32_t n=0; n<natoms; n++)
-      {
-        fprintf(xyzf,"%s \t %.15lf \t %.15lf \t %.15lf \n","X",x[n],y[n],z[n]);
-      }
-      
-      fprintf(vxyzf,"%d\n",natoms);
-      fprintf(vxyzf,"Ala2 velocities at time %.3lf\n",time);
-      for(int32_t n=0; n<natoms; n++)
-      {
-        fprintf(vxyzf,"%s \t %.15lf \t %.15lf \t %.15lf \n","X",vx[n],vy[n],vz[n]);
-      }
-      
-    }
+//     // if necessary retrieve crdvels and print trajectory
+//     if(istep%traj_save_freq == 0)
+//     {
+//       double time = (double)istep*dt;
+//       
+//       fprintf(stdout,"Retrieving coordinates and velocities at time %.3lf ps\n",time);
+//       
+//       tinker_get_crdvels();
+//       
+//       fprintf(xyzf,"%d\n",natoms);
+//       fprintf(xyzf,"Ala2 coordinates at time %.3lf\n",time);
+//       for(int32_t n=0; n<natoms; n++)
+//       {
+//         fprintf(xyzf,"%s \t %.15lf \t %.15lf \t %.15lf \n","X",x[n],y[n],z[n]);
+//       }
+//       
+//       fprintf(vxyzf,"%d\n",natoms);
+//       fprintf(vxyzf,"Ala2 velocities at time %.3lf\n",time);
+//       for(int32_t n=0; n<natoms; n++)
+//       {
+//         fprintf(vxyzf,"%s \t %.15lf \t %.15lf \t %.15lf \n","X",vx[n],vy[n],vz[n]);
+//       }
+//       
+//     }
     
   }
   
-  fclose(xyzf);
-  fclose(vxyzf);
+//   fclose(xyzf);
+//   fclose(vxyzf);
   
   tinker_finalize();
 

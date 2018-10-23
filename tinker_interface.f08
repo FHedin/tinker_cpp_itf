@@ -202,7 +202,7 @@ module tinker_cpp
     integer(kind=c_int32_t) :: istep
     
     call sdstep(istep,dt)
-  
+    
   end subroutine
   
   !---------------------------------------------------------------------------------------------------------
@@ -222,6 +222,20 @@ module tinker_cpp
     end do
   
   end subroutine
+  
+  !---------------------------------------------------------------------------------------------------------
+  ! calculate current value of the total kinetic energy and temperature
+  subroutine tinker_kinetic(eksum,temp) bind(C, name="tinker_kinetic")
+  
+    implicit none
+    
+    real(kind=c_double) :: eksum,temp
+    real(kind=c_double) :: ekin(3,3)
+    
+    call kinetic(eksum,ekin,temp)
+  
+  end subroutine
+  
   !---------------------------------------------------------------------------------------------------------
   
   ! Copy from Tinker to C++ the current coordinates and velocities
